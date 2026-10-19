@@ -1,0 +1,10 @@
+{
+  "name": "prompt-explorer",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "description": "Editor Markdown local con cinco perfiles y commits Git locales",
+  "scripts": { "start": "node server.mjs", "test": "node --test" },
+  "engines": { "node": ">=22" },
+  "dependencies": { "dompurify": "^3.3.0", "marked": "^17.0.0" }
+}
