@@ -66,6 +66,7 @@ for name in ['public', 'node_modules']:
     shutil.copytree(ROOT / name, source / name, symlinks=True, ignore=shutil.ignore_patterns('.DS_Store', '.bin'))
 for name in ['LEEME-macOS.md', 'THIRD-PARTY-NOTICES.md', 'components.json']:
     shutil.copy2(ROOT / 'packaging/macos' / name, resources / name)
+shutil.copytree(ROOT / 'packaging/macos/licenses', resources / 'licenses')
 target = ('arm64' if ARCH == 'arm64' else 'x86_64') + '-apple-macos14.0'
 run('/usr/bin/swiftc', '-swift-version', '5', '-O', '-target', target, '-module-cache-path', BUILD / 'swift-cache', ROOT / 'packaging/macos/Launcher.swift', '-o', macos / 'PromptExplorer')
 run('/usr/bin/codesign', '--force', '--deep', '--sign', '-', app)
