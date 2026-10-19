@@ -114,6 +114,8 @@ test('Git local: carpetas reales, commits y cambios de herramientas externas', {
     assert.equal((await chrome('connect', 0, { mode: 'local', directory: path.join(repo, 'Ideas') })).status, 400);
     for (const file of ['../escape.md', '.git/config.md', '/tmp/escape.md', 'no.txt']) assert.equal((await chrome('new', 0, { path: file, content: 'no' })).status, 400);
     for (const route of ['auth/start', 'pull', 'resolve', 'finish']) assert.equal((await chrome(route, 0, {})).status, 404);
+    assert.equal((await fetch(base + '/health')).status, 200);
+    assert.equal((await fetch(base + '/quit', { method: 'POST', headers: { 'X-PromptExplorer': '1', 'X-PE-Instance': 'wrong' } })).status, 403);
     assert.equal((await fetch(base + '/api/state')).status, 403);
     assert.equal((await fetch(base + '/api/state', { headers: { 'X-PromptExplorer': '1', Origin: 'https://example.com' } })).status, 403);
     assert.equal((await chrome('commit', 0, { message: '' })).status, 400);

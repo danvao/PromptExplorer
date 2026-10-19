@@ -1,0 +1,53 @@
+name: Windows portable
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.22.0'
+          cache: npm
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - run: npm ci
+      - run: npm test
+      - name: Build and test standalone EXE
+        shell: pwsh
+        run: ./packaging/windows/build.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PromptExplorer-Windows-x64
+          path: dist/windows/
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: PromptExplorer-Windows-x64
+          path: dist
+      - name: Publish tested Windows package
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$RELEASE_TAG" dist/PromptExplorer.exe dist/SHA256SUMS.txt dist/LEEME-Windows.md dist/THIRD-PARTY-NOTICES.md dist/components.json dist/windows-smoke.json --title "PromptExplorer $RELEASE_TAG · Windows portable" --notes "Ejecutable autónomo Windows x64. Incluye Node.js, MinGit y runtime .NET; no requiere instalación ni administrador. Probado automáticamente en Windows creando un commit con los componentes incluidos. Esta versión no está firmada digitalmente. Consulta LEEME-Windows.md."

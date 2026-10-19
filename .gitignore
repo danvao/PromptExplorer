@@ -3,3 +3,8 @@ node_modules/
 .env
 *.log
 .DS_Store
+dist/
+build/
+packaging/windows/bin/
+packaging/windows/obj/
+packaging/windows/payload.zip

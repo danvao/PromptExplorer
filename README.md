@@ -11,7 +11,17 @@ Descargar la app no conecta tu cuenta personal ni obliga a usar el repositorio d
 
 Puedes descargar el código de la app como ZIP, descomprimirlo y ejecutarlo sin conservar una copia Git del código. Si el repositorio es privado, descarga el ZIP con una cuenta que tenga acceso o usa una copia transferida por un medio permitido por tu empresa.
 
-## Abrir
+## Windows: ejecutable autónomo
+
+La distribución `PromptExplorer.exe` se genera y prueba en Windows mediante el workflow **Windows portable**, y se adjunta a la release de la versión cuando las pruebas pasan. Descarga el EXE desde [Releases](https://github.com/danvao/PromptExplorer/releases).
+
+No requiere instalar Node.js, Git ni .NET. Incluye esos componentes y abre la interfaz en el navegador predeterminado. Se cierra desde el icono junto al reloj → **Salir**. Puedes abrir la dirección local en Chrome y Firefox. El primer paquete es Windows x64, sin firma digital; su ejecución está sujeta a las políticas de TI.
+
+Runtime y datos se guardan por usuario en `%LOCALAPPDATA%\PromptExplorer`, separados de los documentos de repositorios locales. Copiar el EXE a otra computadora no transfiere los borradores ni las credenciales SSH. Más detalles en [LEEME-Windows](packaging/windows/LEEME-Windows.md).
+
+Para construir: Windows, Node.js, Git y .NET SDK 8; ejecuta `npm ci`, `npm test` y `pwsh ./packaging/windows/build.ps1`. El script descarga binarios oficiales con SHA-256 fijados, los empaqueta, construye el EXE y lo ejecuta sin Node/Git externos en PATH para verificar un commit real.
+
+## Abrir desde el código fuente
 
 Requisitos: Node.js 22 o superior y Git. En Mac abre `start.command`; en Windows abre `start.bat`. También puedes ejecutar `npm install` la primera vez y `npm start`.
 

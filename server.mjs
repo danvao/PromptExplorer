@@ -12,6 +12,7 @@ const PORT = Number(process.env.PORT || 4317);
 const PROFILES = ['Ana', 'Luis', 'Sofía', 'Diego', 'Valeria'];
 const sessions = new Map();
 let queue = Promise.resolve();
+let stopping = false;
 await fs.mkdir(DATA, { recursive: true, mode: 0o700 });
 
 class AppError extends Error {
@@ -34,7 +35,7 @@ function cleanError(value) {
 async function run(args, cwd, allowFailure = false, network = false) {
   return new Promise((resolve, reject) => {
     const child = spawn('git', ['-c', 'core.quotepath=false', ...args], {
-      cwd, shell: false,
+      cwd, shell: false, windowsHide: true,
       env: { ...process.env, GIT_TERMINAL_PROMPT: '0', GCM_INTERACTIVE: 'never', GIT_EDITOR: 'true', ...(network ? { GIT_SSH_COMMAND: 'ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=12' } : {}) }
     });
     let out = '', err = '';
@@ -321,7 +322,20 @@ const server = http.createServer(async (req, res) => {
     if (!hosts.includes(req.headers.host)) throw new AppError('Host no permitido.', 403);
     if (req.headers.origin && !hosts.some(h => req.headers.origin === 'http://' + h)) throw new AppError('Origen no permitido.', 403);
     const url = new URL(req.url, `http://127.0.0.1:${PORT}`);
+    if (url.pathname === '/health' && req.method === 'GET') {
+      return send(res, 200, { app: 'PromptExplorer', instance: process.env.PE_INSTANCE_ID || 'source' });
+    }
+    if (url.pathname === '/quit' && req.method === 'POST') {
+      if (!process.env.PE_INSTANCE_ID || req.headers['x-pe-instance'] !== process.env.PE_INSTANCE_ID || req.headers['x-promptexplorer'] !== '1') throw new AppError('Solicitud no permitida.', 403);
+      stopping = true;
+      await queue;
+      send(res, 200, { ok: true });
+      server.close(() => process.exit(0));
+      server.closeIdleConnections();
+      return;
+    }
     if (url.pathname.startsWith('/api/')) {
+      if (stopping) throw new AppError('La aplicación se está cerrando.', 503);
       if (!['GET', 'POST'].includes(req.method) || req.headers['x-promptexplorer'] !== '1') throw new AppError('Solicitud no permitida.', 403);
       // One queue makes simultaneous windows safe, including operations on the same profile.
       const job = queue.then(() => api(req, res, url));
