@@ -1,0 +1,58 @@
+name: macOS portable
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'mac-v*'
+permissions:
+  contents: read
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            arch: arm64
+          - os: macos-15-intel
+            arch: x64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.22.0'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Build and test native macOS app
+        run: python3 packaging/macos/build.py --arch ${{ matrix.arch }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: PromptExplorer-macOS-${{ matrix.arch }}
+          path: dist/macos-${{ matrix.arch }}/
+          if-no-files-found: error
+  release:
+    if: startsWith(github.ref, 'refs/tags/mac-v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: PromptExplorer-macOS-*
+          path: dist
+          merge-multiple: true
+      - name: Add tested Mac apps to the existing release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          VERSION_TAG="${RELEASE_TAG#mac-}"
+          gh release view "$VERSION_TAG"
+          gh release upload "$VERSION_TAG" dist/PromptExplorer-macOS-arm64.zip dist/PromptExplorer-macOS-x64.zip dist/SHA256SUMS-macOS-arm64.txt dist/SHA256SUMS-macOS-x64.txt dist/macOS-arm64-smoke.json dist/macOS-x64-smoke.json dist/LEEME-macOS.md dist/THIRD-PARTY-NOTICES-macOS.md --clobber
+          gh release edit "$VERSION_TAG" --title "PromptExplorer $VERSION_TAG · Windows y macOS" --notes "Paquetes autónomos sin instalar Node.js ni Git: PromptExplorer.exe para Windows x64; ZIP con PromptExplorer.app para macOS 14+ en Apple Silicon (arm64) e Intel (x64). Cada paquete fue probado en su sistema creando un commit con los componentes incluidos. Los documentos y credenciales se guardan por separado. Windows no tiene firma de editor; macOS tiene firma ad hoc y no está notarizado. Consulta LEEME-Windows.md y LEEME-macOS.md. Código del empaquetado Mac: etiqueta $RELEASE_TAG."

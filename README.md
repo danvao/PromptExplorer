@@ -21,6 +21,14 @@ Runtime y datos se guardan por usuario en `%LOCALAPPDATA%\PromptExplorer`, separ
 
 Para construir: Windows, Node.js, Git y .NET SDK 8; ejecuta `npm ci`, `npm test` y `pwsh ./packaging/windows/build.ps1`. El script descarga binarios oficiales con SHA-256 fijados, los empaqueta, construye el EXE y lo ejecuta sin Node/Git externos en PATH para verificar un commit real.
 
+## Mac: app autónoma
+
+En la misma release de Windows hay dos ZIP con **PromptExplorer.app**: **arm64** para Apple Silicon y **x64** para Intel. Requieren macOS 14 o posterior e incluyen Node.js y Git; no necesitas Homebrew ni Xcode para usarlos. Descomprime y abre la app. Puedes salir desde su icono en la barra superior.
+
+Los documentos se conservan en sus carpetas originales. Las copias de prueba y configuración están en `~/Library/Application Support/PromptExplorer/data`. El paquete tiene firma ad hoc, no Developer ID ni notarización; las políticas del equipo pueden exigir revisión de TI. Detalles en [LEEME-macOS](packaging/macos/LEEME-macOS.md).
+
+El código del empaquetado Mac está en la etiqueta `mac-v0.4.1`; el workflow **macOS portable** compila y prueba cada arquitectura en su sistema, y agrega los ZIP a la release `v0.4.1`. Para construir desde el código: `npm ci`, `npm test` y `python3 packaging/macos/build.py --arch arm64` (o `x64` en Intel). El script verifica SHA-256 de los componentes oficiales, construye la app y ejecuta una prueba que crea un commit con su Git incluido.
+
 ## Abrir desde el código fuente
 
 Requisitos: Node.js 22 o superior y Git. En Mac abre `start.command`; en Windows abre `start.bat`. También puedes ejecutar `npm install` la primera vez y `npm start`.
