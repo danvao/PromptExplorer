@@ -11,7 +11,7 @@ El programa permanece activo en el área de notificación, junto al reloj. Haz c
 
 ## Datos y actualizaciones
 
-El programa se extrae en `%LOCALAPPDATA%\PromptExplorer\runtime\0.4.0`. Los datos y las copias de prueba se guardan por separado en `%LOCALAPPDATA%\PromptExplorer\data`. Los repositorios locales elegidos permanecen en sus carpetas originales. No se instalan servicios ni se cambia el registro o la configuración del sistema, y no se requieren permisos de administrador.
+El programa se extrae en `%LOCALAPPDATA%\PromptExplorer\runtime\0.4.1`. Los datos y las copias de prueba se guardan por separado en `%LOCALAPPDATA%\PromptExplorer\data`. Los repositorios locales elegidos permanecen en sus carpetas originales. No se instalan servicios ni se cambia el registro o la configuración del sistema, y no se requieren permisos de administrador.
 
 Puedes reemplazar el EXE por una versión nueva sin borrar tus documentos. Para retirar completamente la aplicación, primero cierra la app y conserva cualquier copia o commit sin publicar; después elimina el EXE y, si ya no necesitas su contenido, la carpeta `%LOCALAPPDATA%\PromptExplorer`. No borres esa carpeta mientras tengas borradores o commits locales pendientes.
 

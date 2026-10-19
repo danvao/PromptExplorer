@@ -11,7 +11,7 @@ namespace PromptExplorer;
 
 internal static class Program
 {
-    internal const string Version = "0.4.0";
+    internal const string Version = "0.4.1";
     internal static readonly string Home = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "PromptExplorer");
     internal static readonly string Data = Path.Combine(Home, "data");
     internal static readonly string Runtime = Path.Combine(Home, "runtime", Version);
@@ -61,10 +61,19 @@ internal static class Program
                 if (!File.Exists(Path.Combine(temp, relative))) throw new IOException("Falta un componente: " + relative);
             File.WriteAllText(Path.Combine(temp, ".ready"), Version);
             Directory.CreateDirectory(Path.GetDirectoryName(Runtime)!);
-            if (Directory.Exists(Runtime)) Directory.Delete(Runtime, true); // Runtime cache only; user data is elsewhere.
+            if (Directory.Exists(Runtime)) DeleteCache(Runtime); // Runtime cache only; user data is elsewhere.
             Directory.Move(temp, Runtime);
         }
-        finally { if (Directory.Exists(temp)) Directory.Delete(temp, true); }
+        finally { if (Directory.Exists(temp)) DeleteCache(temp); }
+    }
+
+    private static void DeleteCache(string directory)
+    {
+        // Git objects can be read-only on Windows. This helper is used only for
+        // runtime caches and the disposable smoke test, never user repositories.
+        foreach (var file in Directory.EnumerateFiles(directory, "*", SearchOption.AllDirectories))
+            File.SetAttributes(file, FileAttributes.Normal);
+        Directory.Delete(directory, true);
     }
 
     internal static int FreePort()
@@ -156,7 +165,12 @@ internal static class Program
             return 0;
         }
         catch (Exception e) { await File.WriteAllTextAsync(output, JsonSerializer.Serialize(new { ok = false, error = e.ToString() })); return 1; }
-        finally { if (process != null) { await StopServer(process, port, instance); process.Dispose(); } if (Directory.Exists(isolated)) Directory.Delete(isolated, true); }
+        finally
+        {
+            if (process != null) { await StopServer(process, port, instance); process.Dispose(); }
+            try { if (Directory.Exists(isolated)) DeleteCache(isolated); }
+            catch (Exception cleanup) { Log("Smoke cleanup: " + cleanup.Message); }
+        }
     }
 
     internal record Health(string app, string instance);
