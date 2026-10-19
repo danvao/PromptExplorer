@@ -152,8 +152,11 @@ final class Engine {
 
 @MainActor final class AppDelegate: NSObject, NSApplicationDelegate {
     let engine = Engine()
+    let smokeOutput: URL?
     var item: NSStatusItem?
     var closing = false
+
+    init(smokeOutput: URL? = nil) { self.smokeOutput = smokeOutput; super.init() }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
@@ -164,10 +167,23 @@ final class Engine {
         }
         item?.menu = menu
         Task {
+            let temporary = FileManager.default.temporaryDirectory.appendingPathComponent("PromptExplorer-launcher-\(UUID().uuidString)")
             do {
+                if let output = smokeOutput {
+                    try await engine.start(dataDirectory: temporary, isolated: true)
+                    let result: [String: Any] = ["ok": true, "launcherStarted": true, "menuCreated": item != nil]
+                    try JSONSerialization.data(withJSONObject: result).write(to: output)
+                    await engine.stop(); try? FileManager.default.removeItem(at: temporary); NSApp.terminate(nil)
+                    return
+                }
                 if try engine.acquireLock() { try await engine.start(); try engine.saveInstance(); openBrowser() }
                 else { try await engine.openExisting(); NSApp.terminate(nil) }
             } catch {
+                if let output = smokeOutput {
+                    try? JSONSerialization.data(withJSONObject: ["ok": false, "error": error.localizedDescription]).write(to: output)
+                    await engine.stop(); try? FileManager.default.removeItem(at: temporary); NSApp.terminate(nil)
+                    return
+                }
                 let alert = NSAlert(); alert.messageText = "No se pudo abrir PromptExplorer"; alert.informativeText = error.localizedDescription
                 alert.runModal(); await engine.stop(); NSApp.terminate(nil)
             }
@@ -192,7 +208,10 @@ if CommandLine.arguments.count == 3 && CommandLine.arguments[1] == "--smoke-test
 } else {
     MainActor.assumeIsolated {
         let app = NSApplication.shared
-        let delegate = AppDelegate()
-        app.delegate = delegate; app.setActivationPolicy(.accessory); app.run()
+        let output = CommandLine.arguments.count == 3 && CommandLine.arguments[1] == "--launcher-smoke-test" ? URL(fileURLWithPath: CommandLine.arguments[2]) : nil
+        let delegate = AppDelegate(smokeOutput: output)
+        app.delegate = delegate; app.setActivationPolicy(.accessory)
+        // NSApplication's delegate is weak. Keep it alive for the message loop.
+        withExtendedLifetime(delegate) { app.run() }
     }
 }

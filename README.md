@@ -27,7 +27,7 @@ En la misma release de Windows hay dos ZIP con **PromptExplorer.app**: **arm64**
 
 Los documentos se conservan en sus carpetas originales. Las copias de prueba y configuración están en `~/Library/Application Support/PromptExplorer/data`. El paquete tiene firma ad hoc, no Developer ID ni notarización; las políticas del equipo pueden exigir revisión de TI. Detalles en [LEEME-macOS](packaging/macos/LEEME-macOS.md).
 
-El código del empaquetado Mac está en la etiqueta `mac-v0.4.1-r1`; el workflow **macOS portable** compila y prueba cada arquitectura en su sistema, y agrega los ZIP a la release `v0.4.1`. Para construir desde el código: `npm ci`, `npm test` y `python3 packaging/macos/build.py --arch arm64` (o `x64` en Intel). El script verifica SHA-256 de los componentes oficiales, construye la app y ejecuta una prueba que crea un commit con su Git incluido.
+El código del empaquetado Mac está en la etiqueta `mac-v0.4.1-r2`; el workflow **macOS portable** compila y prueba cada arquitectura en su sistema, y agrega los ZIP a la release `v0.4.1`. Para construir desde el código: `npm ci`, `npm test` y `python3 packaging/macos/build.py --arch arm64` (o `x64` en Intel). El script verifica SHA-256 de los componentes oficiales, construye la app y ejecuta una prueba que crea un commit con su Git incluido.
 
 ## Abrir desde el código fuente
 

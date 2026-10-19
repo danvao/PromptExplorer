@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[2]
 parser = argparse.ArgumentParser()
 parser.add_argument('--arch', choices=['arm64', 'x64'], default='arm64' if platform.machine() == 'arm64' else 'x64')
 parser.add_argument('--skip-smoke', action='store_true', help='Cross-compile only. Release workflow always runs a native smoke test.')
+parser.add_argument('--skip-ui-smoke', action='store_true', help='Skip native menu/message-loop test when building locally without UI.')
 args = parser.parse_args()
 ARCH = args.arch
 CONFIG = json.loads((ROOT / 'packaging/macos/components.json').read_text())
@@ -80,6 +81,12 @@ if not args.skip_smoke:
     result = json.loads(report.read_text())
     if not result.get('ok'): raise RuntimeError(str(result))
     print(json.dumps(result), flush=True)
+    if not args.skip_ui_smoke:
+        launcher_report = DIST / ('macOS-' + ARCH + '-launcher-smoke.json')
+        run(macos / 'PromptExplorer', '--launcher-smoke-test', launcher_report, env=environment, timeout=90)
+        launcher_result = json.loads(launcher_report.read_text())
+        if not launcher_result.get('ok'): raise RuntimeError(str(launcher_result))
+        print(json.dumps(launcher_result), flush=True)
 archive = DIST / ('PromptExplorer-macOS-' + ARCH + '.zip')
 if archive.exists(): archive.unlink()
 run('/usr/bin/ditto', '-c', '-k', '--sequesterRsrc', '--keepParent', app, archive)
